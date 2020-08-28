@@ -1,5 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+const httpOptions = {
+  headers: new HttpHeaders({'Content-Type': 'application/json'})
+};
+import { NgForm } from '@angular/forms';
 import { Router } from '@angular/router';
+import { User } from '../user';
+
+const backUrl = 'http://localhost:3000';
 
 @Component({
   selector: 'app-login',
@@ -8,33 +16,30 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent implements OnInit {
 
-  email = "";
-  password = "";
+  userobs;
+  email:string = "";
+  username:string = "";
+  password:string = "";
+  errormsg = "";
+  newuser:User;
+  userid="";
 
-  accounts = [
-    {email:"james@angier.co.uk", password:"abc123"},
-    {email:"david@angier.co.uk", password:"123abc"},
-    {email:"alison@angier.co.uk", password:"1234"}
-  ]
-  //Test
-  constructor(private router: Router) {}
+  constructor(private router: Router, private httpClient: HttpClient) {}
 
   ngOnInit(): void {
   }
 
   registeredAccount() {
-    var registered = false;
-    for (let i = 0; i < this.accounts.length; i++) {
-        if (this.accounts[i].email == this.email && this.accounts[i].password == this.password) {
-            registered = true;
+    let user = {username: this.username, password: this.password};
+    this.httpClient.post(backUrl + '/api/auth', user, httpOptions).subscribe((data:any) => {
+        if (data.valid){
+          this.newuser = new User(data.username, data.age, data.email)
+          sessionStorage.setItem('currentUser', JSON.stringify(this.newuser));
+          this.router.navigateByUrl("/account");
+        } else {
+          alert ("Sorry, account credentials are not valid");
         }
-    }
-    if (registered) {
-      this.router.navigateByUrl("/account")
-    }
-    else {
-      alert("Invalid Credentials")
-    }
+    })
   }
 
 }
